@@ -83,7 +83,7 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <button @click="fetchDataFromServer" class="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded transition text-sm font-medium" title="Refresh Data"><i class="fas fa-sync-alt"></i></button>
-                    <span class="text-sm font-medium text-gray-600 border-l pl-4 hidden md:block"><b class="text-blue-600">{{ currentUser.name }}</b></span>
+                    <span class="text-sm font-medium text-gray-600 border-l pl-4 md:block"><b class="text-blue-600">{{ currentUser.name }}</b></span>
                     <button @click="logout" class="text-gray-500 hover:text-red-600 transition px-2 py-2" title="Keluar"><i class="fas fa-sign-out-alt text-lg"></i></button>
                 </div>
             </nav>
@@ -97,7 +97,7 @@
                 <div v-if="dashboardTab === 'my'">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold text-gray-800">Daftar Silsilah Anda</h2>
-                        <button @click="openFamilyModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-medium"><i class="fas fa-plus"></i></button>
+                        <button @click="openFamilyModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-medium"><i class="fas fa-plus"></i> Silsilah</button>
                     </div>
                     <div v-if="myFamilies.length === 0" class="text-center py-12 bg-white rounded-xl border border-dashed"><p class="text-gray-500">Anda belum membuat silsilah.</p></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
