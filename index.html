@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Silsilah Keluarga</title>
     
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/lib/index.min.js"></script>
@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
 
     <style>
-        /* CSS Bagan Silsilah: Memaksa Hierarki Atas-Bawah secara Fisik */
         .tree ul { display: flex; justify-content: center; align-items: flex-start; padding-top: 30px; position: relative; transition: all 0.5s; }
         .tree li { display: flex; flex-direction: column; align-items: center; position: relative; padding: 30px 10px 0 10px; transition: all 0.5s; }
         
@@ -24,23 +23,23 @@
         .tree li:first-child::after { border-radius: 6px 0 0 0; }
         .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #94a3b8; width: 0; height: 30px; margin-left: -1px; }
         
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        #tree-wrapper::-webkit-scrollbar { display: none; }
+        #tree-wrapper { -ms-overflow-style: none; scrollbar-width: none; touch-action: none;}
         
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         [v-cloak] { display: none; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800">
-    <div id="app" class="min-h-screen flex flex-col relative" v-cloak>
+<body class="bg-gray-50 font-sans text-gray-800 overflow-hidden">
+    <div id="app" class="h-screen w-screen flex flex-col relative" v-cloak>
 
+        <!-- Loading Screen -->
         <div v-if="isLoading" class="loading-overlay">
             <i class="fas fa-cloud-download-alt fa-bounce text-5xl text-blue-600 mb-4"></i>
             <p class="text-gray-800 font-bold text-xl">{{ loadingMessage }}</p>
         </div>
 
+        <!-- AUTH PAGE -->
         <div v-if="currentView === 'auth'" class="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-800 p-4">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
                 <div class="text-center mb-8">
@@ -75,15 +74,16 @@
             </div>
         </div>
 
+        <!-- DASHBOARD PAGE -->
         <div v-else-if="currentView === 'dashboard'" class="flex-1 flex flex-col bg-gray-50 h-screen overflow-hidden">
-            <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center z-10">
+            <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center z-10 shrink-0">
                 <div class="flex items-center space-x-3">
                     <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-sitemap"></i></div>
                     <h1 class="font-bold text-xl text-gray-800">Dashboard Utama</h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button @click="fetchDataFromServer" class="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded transition text-sm font-medium"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
-                    <span class="text-sm font-medium text-gray-600 border-l pl-4 hidden md:block">Halo, <b class="text-blue-600">{{ currentUser.name }}</b></span>
+                    <button @click="fetchDataFromServer" class="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded transition text-sm font-medium" title="Refresh Data"><i class="fas fa-sync-alt"></i></button>
+                    <span class="text-sm font-medium text-gray-600 border-l pl-4 hidden md:block"><b class="text-blue-600">{{ currentUser.name }}</b></span>
                     <button @click="logout" class="text-gray-500 hover:text-red-600 transition px-2 py-2" title="Keluar"><i class="fas fa-sign-out-alt text-lg"></i></button>
                 </div>
             </nav>
@@ -91,20 +91,32 @@
             <div class="flex-1 overflow-auto p-8 max-w-6xl mx-auto w-full">
                 <div class="flex space-x-4 mb-8 border-b">
                     <button @click="dashboardTab = 'my'" :class="['pb-3 px-2 font-medium transition', dashboardTab === 'my' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">Keluarga Saya</button>
-                    <button @click="dashboardTab = 'explore'" :class="['pb-3 px-2 font-medium transition', dashboardTab === 'explore' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">Jelajah (Pengguna Lain)</button>
+                    <button @click="dashboardTab = 'explore'" :class="['pb-3 px-2 font-medium transition', dashboardTab === 'explore' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">Jelajah</button>
                 </div>
 
                 <div v-if="dashboardTab === 'my'">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold text-gray-800">Daftar Silsilah Anda</h2>
-                        <button @click="showNewFamilyModal = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-medium"><i class="fas fa-plus mr-2"></i> Buat Silsilah Baru</button>
+                        <button @click="openFamilyModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-medium"><i class="fas fa-plus"></i></button>
                     </div>
                     <div v-if="myFamilies.length === 0" class="text-center py-12 bg-white rounded-xl border border-dashed"><p class="text-gray-500">Anda belum membuat silsilah.</p></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="fam in myFamilies" :key="fam.id" class="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition cursor-pointer" @click="openFamily(fam)">
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fas fa-users"></i></div>
-                            <h3 class="font-bold text-lg text-gray-800">{{ fam.name }}</h3>
-                            <p class="text-xs text-gray-400 mt-2"><i class="far fa-clock"></i> {{ fam.createdAt ? new Date(fam.createdAt).toLocaleDateString('id-ID') : '-' }}</p>
+                        <div v-for="fam in myFamilies" :key="fam.id" class="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition relative group">
+                            <!-- Tombol Edit & Hapus -->
+                            <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition">
+                                <button @click.stop="openFamilyModal('edit', fam)" class="text-gray-400 hover:text-yellow-500 transition" title="Edit Nama Keluarga">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button @click.stop="deleteFamily(fam)" class="text-gray-400 hover:text-red-500 transition" title="Hapus Silsilah">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="cursor-pointer mt-2" @click="openFamily(fam)">
+                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fas fa-users"></i></div>
+                                <h3 class="font-bold text-lg text-gray-800">{{ fam.name }}</h3>
+                                <p class="text-xs text-gray-400 mt-2"><i class="far fa-clock"></i> {{ fam.createdAt ? new Date(fam.createdAt).toLocaleDateString('id-ID') : '-' }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -123,53 +135,66 @@
             </div>
         </div>
 
-        <div v-else-if="currentView === 'tree'" class="flex-1 flex flex-col h-screen overflow-hidden">
-            <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center z-10">
+        <!-- TREE PAGE -->
+        <div v-else-if="currentView === 'tree'" class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+            <nav class="bg-white shadow-sm border-b px-4 py-3 flex justify-between items-center z-20 shrink-0">
                 <div class="flex items-center space-x-4">
-                    <button @click="currentView = 'dashboard'" class="text-gray-500 hover:text-blue-600 transition flex items-center font-medium"><i class="fas fa-arrow-left mr-2"></i> Kembali</button>
+                    <button @click="currentView = 'dashboard'" class="text-gray-500 hover:text-blue-600 transition flex items-center" title="Kembali"><i class="fas fa-arrow-left text-xl"></i></button>
                     <div class="h-6 w-px bg-gray-300"></div>
-                    <h1 class="font-bold text-xl text-gray-800">{{ selectedFamily.name }}</h1>
-                    <span v-if="isReadOnly" class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold uppercase border border-yellow-200">Hanya Lihat</span>
+                    <h1 class="font-bold text-lg text-gray-800 truncate max-w-[150px] md:max-w-xs">{{ selectedFamily.name }}</h1>
+                    <span v-if="isReadOnly" class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded font-bold uppercase border border-yellow-200">View Only</span>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button v-if="!isReadOnly" @click="openAddModal(null)" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition text-sm font-medium"><i class="fas fa-plus mr-1"></i> Tambah</button>
-                    <button v-if="!isReadOnly" @click="saveFamilyToServer" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition text-sm font-medium"><i class="fas fa-cloud-upload-alt mr-2"></i> Simpan</button>
+                <!-- Navigasi Ikon Saja -->
+                <div class="flex items-center space-x-2">
+                    <button @click="resetTransform" class="text-gray-500 hover:bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center transition" title="Reset Posisi (Tengah)">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </button>
+                    <template v-if="!isReadOnly">
+                        <button @click="openAddModal(null)" class="bg-blue-100 text-blue-700 hover:bg-blue-200 w-10 h-10 rounded-full flex items-center justify-center transition" title="Tambah Akar Silsilah">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button @click="saveFamilyToServer" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow transition" title="Simpan Perubahan (Save)">
+                            <i class="fas fa-save"></i>
+                        </button>
+                    </template>
                 </div>
             </nav>
 
-            <main class="flex-1 overflow-auto bg-gray-50 relative cursor-grab active:cursor-grabbing p-8" id="tree-container">
-                <div class="min-w-max min-h-full flex justify-center items-start transition-transform duration-300 origin-top" :style="{ transform: `scale(${zoomLevel})` }">
+            <!-- Container Interaktif -->
+            <main id="tree-wrapper" class="flex-1 overflow-hidden relative cursor-grab active:cursor-grabbing select-none"
+                  @mousedown="startPan" @mousemove="doPan" @mouseup="endPan" @mouseleave="endPan"
+                  @touchstart.passive="startTouch" @touchmove.passive="doTouch" @touchend.passive="endTouch"
+                  @wheel.prevent="doWheelZoom">
+                  
+                <div id="tree-content" class="absolute origin-top-left w-max h-max p-12 transition-transform duration-75"
+                     :style="{ transform: `translate(${panX}px, ${panY}px) scale(${zoomLevel})` }">
                     <div class="tree" v-if="treeData.length > 0">
                         <ul><tree-node v-for="node in treeData" :key="node.id" :node="node"></tree-node></ul>
                     </div>
-                    <div v-else class="flex flex-col items-center justify-center mt-32 text-gray-400">
+                    <div v-else class="flex flex-col items-center justify-center mt-32 text-gray-400 w-full min-w-[300px]">
                         <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4"><i class="fas fa-tree text-4xl text-gray-400"></i></div>
-                        <p class="text-lg">Pohon silsilah ini masih kosong.</p>
-                        <button v-if="!isReadOnly" @click="openAddModal(null)" class="mt-4 bg-white border shadow-sm px-4 py-2 rounded-lg text-blue-600 font-medium hover:bg-gray-50">Mulai Tambah Anggota</button>
+                        <p class="text-lg">Silsilah kosong.</p>
                     </div>
-                </div>
-
-                <div class="fixed bottom-6 right-6 flex flex-col bg-white rounded-lg shadow-lg border overflow-hidden z-10">
-                    <button @click="zoomIn" class="p-3 text-gray-600 hover:bg-gray-100 border-b hover:text-blue-600"><i class="fas fa-search-plus"></i></button>
-                    <button @click="zoomReset" class="p-3 text-gray-600 hover:bg-gray-100 border-b hover:text-blue-600 text-xs font-bold">100%</button>
-                    <button @click="zoomOut" class="p-3 text-gray-600 hover:bg-gray-100 hover:text-blue-600"><i class="fas fa-search-minus"></i></button>
                 </div>
             </main>
         </div>
 
-        <div v-if="showNewFamilyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <!-- MODALS -->
+        <!-- Modal Manajemen Keluarga (Buat/Edit) -->
+        <div v-if="showFamilyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Buat Silsilah Baru</h3>
-                <form @submit.prevent="createFamily">
-                    <input v-model="newFamilyName" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" required placeholder="Contoh: Keluarga Cendana">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">{{ familyModalMode === 'create' ? 'Buat Silsilah Baru' : 'Edit Nama Silsilah' }}</h3>
+                <form @submit.prevent="submitFamilyForm">
+                    <input v-model="familyFormName" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" required placeholder="Contoh: Keluarga Cendana">
                     <div class="flex justify-end space-x-3">
-                        <button type="button" @click="showNewFamilyModal = false" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow">Buat Silsilah</button>
+                        <button type="button" @click="showFamilyModal = false" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
 
+        <!-- CRUD Anggota -->
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
                 <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
@@ -199,13 +224,13 @@
                     <div v-if="['add', 'edit', 'add_partner', 'edit_partner'].includes(modalMode)">
                         <label class="block text-sm font-medium mb-1">Pilih Orang Tua (Opsional)</label>
                         <select v-model="formData.parentId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
-                            <option :value="null">-- Tidak Ada (Otomatis Ditarik Paling Atas) --</option>
+                            <option :value="null">-- Tidak Ada (Paling Atas) --</option>
                             <option v-for="m in availableParentsForEdit" :key="m.id" :value="m.id">{{ m.name }}</option>
                         </select>
                     </div>
                     <div class="pt-4 flex justify-end space-x-3 border-t mt-6">
                         <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow"><i class="fas fa-check mr-1"></i> Simpan Posisi</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow"><i class="fas fa-check mr-1"></i> Terapkan</button>
                     </div>
                 </form>
             </div>
@@ -214,7 +239,7 @@
 
     <script>
         // ==== PENTING: GANTI URL DI BAWAH DENGAN URL WEB APP GAS ANDA ====
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz4l3C5TVc1W4nLlzmC3ZrWfDFunBaKdCNjfqsqNrabDiQXy_t1bYy9XDTuJb2hk6lL2Q/exec';
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz_0tE1TfloEmQ0-JLad32HQjoILW5m6IofJGApW53WWbQ3JJ7lauuiMGl5UlwnX7YHRg/exec';
 
         const safeStorage = {
             get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
@@ -244,11 +269,11 @@
                         <template v-else>
                             <div class="relative inline-block mx-2 text-center group cursor-default">
                                 <div v-if="!isReadOnly.value" class="absolute -top-5 right-[-10px] hidden group-hover:flex gap-1 z-20 bg-white/50 backdrop-blur-sm p-1 rounded-full shadow border transition-all">
-                                    <button v-if="!node.parentId" @click.stop="openAddParentModal(node)" class="bg-indigo-500 text-white rounded-full w-8 h-8 hover:bg-indigo-600 hover:scale-110 transition" title="Tambah Orang Tua (Naik Ke Atas)"><i class="fas fa-arrow-up"></i></button>
-                                    <button v-if="!node.partner" @click.stop="openPartnerModal(node, 'add_partner')" class="bg-purple-500 text-white rounded-full w-8 h-8 hover:bg-purple-600 hover:scale-110 transition" title="Tambah Pasangan"><i class="fas fa-heart"></i></button>
-                                    <button @click.stop="openAddModal(node.id)" class="bg-green-500 text-white rounded-full w-8 h-8 hover:bg-green-600 hover:scale-110 transition" title="Tambah Anak"><i class="fas fa-plus"></i></button>
-                                    <button @click.stop="openEditModal(node)" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition" title="Edit Orang Ini"><i class="fas fa-pen"></i></button>
-                                    <button @click.stop="deleteMember(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition" title="Hapus"><i class="fas fa-trash"></i></button>
+                                    <button v-if="!node.parentId" @click.stop="openAddParentModal(node)" class="bg-indigo-500 text-white rounded-full w-8 h-8 hover:bg-indigo-600 hover:scale-110 transition"><i class="fas fa-arrow-up"></i></button>
+                                    <button v-if="!node.partner" @click.stop="openPartnerModal(node, 'add_partner')" class="bg-purple-500 text-white rounded-full w-8 h-8 hover:bg-purple-600 hover:scale-110 transition"><i class="fas fa-heart"></i></button>
+                                    <button @click.stop="openAddModal(node.id)" class="bg-green-500 text-white rounded-full w-8 h-8 hover:bg-green-600 hover:scale-110 transition"><i class="fas fa-plus"></i></button>
+                                    <button @click.stop="openEditModal(node)" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition"><i class="fas fa-pen"></i></button>
+                                    <button @click.stop="deleteMember(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition"><i class="fas fa-trash"></i></button>
                                 </div>
                                 <div :class="['p-4 rounded-xl shadow-sm border-2 min-w-[140px] bg-white transition hover:shadow-md', node.gender === 'M' ? 'border-blue-200' : 'border-pink-200']">
                                     <div :class="['w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl text-white mb-2 shadow-inner', node.gender === 'M' ? 'bg-gradient-to-br from-blue-400 to-blue-600' : 'bg-gradient-to-br from-pink-400 to-pink-600']"><i :class="node.gender === 'M' ? 'fas fa-user-tie' : 'fas fa-user'"></i></div>
@@ -263,15 +288,15 @@
 
                             <div v-if="node.partner" class="relative inline-block mx-2 text-center group cursor-default">
                                 <div v-if="!isReadOnly.value" class="absolute -top-5 right-[-10px] hidden group-hover:flex gap-1 z-20 bg-white/50 backdrop-blur-sm p-1 rounded-full shadow border transition-all">
-                                    <button @click.stop="openPartnerModal(node, 'edit_partner')" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition" title="Edit Pasangan"><i class="fas fa-pen"></i></button>
-                                    <button @click.stop="deletePartner(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition" title="Hapus Pasangan"><i class="fas fa-trash"></i></button>
+                                    <button @click.stop="openPartnerModal(node, 'edit_partner')" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition"><i class="fas fa-pen"></i></button>
+                                    <button @click.stop="deletePartner(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition"><i class="fas fa-trash"></i></button>
                                 </div>
                                 <div :class="['p-4 rounded-xl shadow-sm border-2 min-w-[140px] bg-white border-dashed transition', node.partner.gender === 'M' ? 'border-blue-300' : 'border-pink-300']">
                                     <div :class="['w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl text-white mb-2 shadow-inner', node.partner.gender === 'M' ? 'bg-gradient-to-br from-blue-300 to-blue-500' : 'bg-gradient-to-br from-pink-300 to-pink-500']"><i :class="node.partner.gender === 'M' ? 'fas fa-user-tie' : 'fas fa-user'"></i></div>
                                     <h3 class="font-bold text-gray-800 text-sm whitespace-nowrap">{{ node.partner.name }}</h3>
                                     <div class="text-xs text-gray-500 mt-1"><i class="fas fa-birthday-cake text-gray-300 mr-1"></i> {{ node.partner.birthYear || '-' }}</div>
                                     <div v-if="node.partner.parentId" class="mt-2 pt-2 border-t border-dashed border-gray-200"><div class="text-[9px] text-gray-400 uppercase">Anak dari</div><div class="text-xs font-semibold text-indigo-600 truncate">{{ getMemberName(node.partner.parentId) }}</div></div>
-                                    <div class="absolute -bottom-2.5 left-1/2 transform -translate-x-1/2 bg-white px-2 text-[10px] text-gray-400 border rounded-full">Pasangan</div>
+                                    <div class="absolute -bottom-2.5 left-1/2 transform -translate-x-1/2 bg-white px-2 text-[10px] text-gray-400 border rounded-full"><i class="fas fa-ring text-[8px] mr-0.5"></i>Pasangan</div>
                                 </div>
                             </div>
                         </template>
@@ -298,145 +323,153 @@
                 const authForm = reactive({ name: '', username: '', password: '' });
                 const authError = ref('');
                 
-                const showNewFamilyModal = ref(false);
-                const newFamilyName = ref('');
+                // Form Manajemen Keluarga
+                const showFamilyModal = ref(false);
+                const familyModalMode = ref('create'); // 'create' atau 'edit'
+                const familyFormName = ref('');
+                const familyFormId = ref(null);
                 
+                // Form Anggota
                 const showModal = ref(false);
                 const modalMode = ref('add');
                 const targetNodeName = ref('');
                 const formData = reactive({ id: null, name: '', gender: 'M', birthYear: '', parentId: null });
 
+                // PAN DAN ZOOM GESTURE
                 const zoomLevel = ref(1);
-                const zoomIn = () => { if (zoomLevel.value < 2) zoomLevel.value += 0.1; };
-                const zoomOut = () => { if (zoomLevel.value > 0.4) zoomLevel.value -= 0.1; };
-                const zoomReset = () => { zoomLevel.value = 1; };
+                const panX = ref(0);
+                const panY = ref(0);
+                let isDragging = false;
+                let startDragX = 0;
+                let startDragY = 0;
+                let initialPinchDistance = null;
+                let initialZoomLevel = 1;
 
+                const resetTransform = () => { zoomLevel.value = 1; panX.value = 0; panY.value = 0; };
+                const startPan = (e) => { if (e.target.closest('button')) return; isDragging = true; startDragX = e.clientX - panX.value; startDragY = e.clientY - panY.value; };
+                const doPan = (e) => { if (!isDragging) return; panX.value = e.clientX - startDragX; panY.value = e.clientY - startDragY; };
+                const endPan = () => { isDragging = false; };
+                const doWheelZoom = (e) => { const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1; zoomLevel.value = Math.min(Math.max(0.3, zoomLevel.value + zoomDelta), 2.5); };
+                
+                const getDistance = (touches) => { const dx = touches[0].clientX - touches[1].clientX; const dy = touches[0].clientY - touches[1].clientY; return Math.sqrt(dx * dx + dy * dy); };
+                const startTouch = (e) => {
+                    if (e.target.closest('button')) return;
+                    if (e.touches.length === 1) { isDragging = true; startDragX = e.touches[0].clientX - panX.value; startDragY = e.touches[0].clientY - panY.value; } 
+                    else if (e.touches.length === 2) { isDragging = false; initialPinchDistance = getDistance(e.touches); initialZoomLevel = zoomLevel.value; }
+                };
+                const doTouch = (e) => {
+                    if (e.touches.length === 1 && isDragging) { panX.value = e.touches[0].clientX - startDragX; panY.value = e.touches[0].clientY - startDragY; } 
+                    else if (e.touches.length === 2 && initialPinchDistance !== null) { const ratio = getDistance(e.touches) / initialPinchDistance; zoomLevel.value = Math.min(Math.max(0.3, initialZoomLevel * ratio), 2.5); }
+                };
+                const endTouch = () => { isDragging = false; initialPinchDistance = null; };
+
+                // FETCH API
                 const callApi = async (action, data = {}) => {
-                    if (GAS_API_URL === '' || GAS_API_URL.includes('MASUKKAN_LINK')) {
-                        return { success: false, message: "URL Database belum disetting di kode HTML!" };
-                    }
+                    if (GAS_API_URL === '' || GAS_API_URL.includes('MASUKKAN_LINK')) return { success: false, message: "URL Database belum disetting!" };
                     try {
-                        const response = await fetch(GAS_API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: action, data: data })
-                        });
+                        const response = await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, data: data }) });
                         return await response.json();
-                    } catch (error) {
-                        return { success: false, message: "Gagal terhubung ke Database Google Sheets." };
-                    }
+                    } catch (error) { return { success: false, message: "Gagal terhubung ke Database Google Sheets." }; }
                 };
 
                 const fetchDataFromServer = async () => {
-                    isLoading.value = true;
-                    loadingMessage.value = 'Menarik data dari database...';
+                    isLoading.value = true; loadingMessage.value = 'Menarik data dari database...';
                     const res = await callApi('getAllData');
-                    if (res.success) {
-                        familiesDb.value = res.families || [];
-                        membersDb.value = res.members || [];
-                    } else {
-                        alert(res.message);
-                    }
+                    if (res.success) { familiesDb.value = res.families || []; membersDb.value = res.members || []; } 
+                    else { alert(res.message); }
                     isLoading.value = false;
                 };
 
                 onMounted(() => {
                     const sessionData = safeStorage.get('gas_app_user');
-                    if (sessionData) {
-                        currentUser.value = JSON.parse(sessionData);
-                        currentView.value = 'dashboard';
-                    }
+                    if (sessionData) { currentUser.value = JSON.parse(sessionData); currentView.value = 'dashboard'; }
                     fetchDataFromServer();
                 });
 
                 const handleAuth = async () => {
-                    isLoading.value = true;
-                    loadingMessage.value = 'Menghubungkan ke database...';
-                    
+                    isLoading.value = true; loadingMessage.value = 'Memproses autentikasi...';
                     const uname = authForm.username.trim().toLowerCase();
                     if (authMode.value === 'register') {
-                        const newUser = { id: 'usr_' + Date.now().toString(36), name: authForm.name, username: uname, password: authForm.password };
-                        const res = await callApi('registerUser', newUser);
-                        
-                        if (res.success) {
-                            currentUser.value = res.user;
-                            safeStorage.set('gas_app_user', JSON.stringify(currentUser.value));
-                            currentView.value = 'dashboard';
-                            fetchDataFromServer();
-                        } else authError.value = res.message;
+                        const res = await callApi('registerUser', { id: 'usr_' + Date.now().toString(36), name: authForm.name, username: uname, password: authForm.password });
+                        if (res.success) { currentUser.value = res.user; safeStorage.set('gas_app_user', JSON.stringify(currentUser.value)); currentView.value = 'dashboard'; fetchDataFromServer(); } 
+                        else authError.value = res.message;
                     } else {
                         const res = await callApi('loginUser', { username: uname, password: authForm.password });
-                        if (res.success) {
-                            currentUser.value = res.user;
-                            safeStorage.set('gas_app_user', JSON.stringify(currentUser.value));
-                            currentView.value = 'dashboard';
-                            fetchDataFromServer();
-                        } else authError.value = res.message;
+                        if (res.success) { currentUser.value = res.user; safeStorage.set('gas_app_user', JSON.stringify(currentUser.value)); currentView.value = 'dashboard'; fetchDataFromServer(); } 
+                        else authError.value = res.message;
                     }
                     isLoading.value = false;
                 };
 
-                const logout = () => {
-                    safeStorage.remove('gas_app_user');
-                    currentUser.value = null;
-                    currentView.value = 'auth';
-                };
+                const logout = () => { safeStorage.remove('gas_app_user'); currentUser.value = null; currentView.value = 'auth'; };
 
                 const myFamilies = computed(() => familiesDb.value.filter(f => f.ownerId === currentUser.value?.id));
                 const otherFamilies = computed(() => familiesDb.value.filter(f => f.ownerId !== currentUser.value?.id));
 
-                const createFamily = async () => {
-                    if (!newFamilyName.value) return;
+                // --- MANAJEMEN KELUARGA (Create, Edit, Delete) ---
+                const openFamilyModal = (mode, fam = null) => {
+                    familyModalMode.value = mode;
+                    if (mode === 'edit') { familyFormId.value = fam.id; familyFormName.value = fam.name; } 
+                    else { familyFormId.value = null; familyFormName.value = ''; }
+                    showFamilyModal.value = true;
+                };
+
+                const submitFamilyForm = async () => {
+                    if (!familyFormName.value) return;
                     isLoading.value = true;
-                    loadingMessage.value = 'Membuat silsilah baru...';
+                    showFamilyModal.value = false;
                     
-                    const newFam = { id: 'fam_' + Date.now(), ownerId: currentUser.value.id, ownerName: currentUser.value.name, name: newFamilyName.value, createdAt: Date.now() };
-                    const res = await callApi('saveFamilyData', newFam);
-                    if(res.success) familiesDb.value.push(newFam);
-                    else alert(res.message);
-                    
-                    newFamilyName.value = '';
-                    showNewFamilyModal.value = false;
+                    if (familyModalMode.value === 'create') {
+                        loadingMessage.value = 'Membuat silsilah baru...';
+                        const newFam = { id: 'fam_' + Date.now(), ownerId: currentUser.value.id, ownerName: currentUser.value.name, name: familyFormName.value, createdAt: Date.now() };
+                        const res = await callApi('saveFamilyData', newFam);
+                        if(res.success) familiesDb.value.push(newFam);
+                        else alert(res.message);
+                    } else {
+                        loadingMessage.value = 'Menyimpan nama baru...';
+                        const res = await callApi('editFamilyName', { familyId: familyFormId.value, newName: familyFormName.value });
+                        if(res.success) {
+                            const index = familiesDb.value.findIndex(f => f.id === familyFormId.value);
+                            if(index !== -1) familiesDb.value[index].name = familyFormName.value;
+                        } else alert(res.message);
+                    }
                     isLoading.value = false;
                 };
 
-                const openFamily = (fam) => { selectedFamily.value = fam; currentView.value = 'tree'; };
+                const deleteFamily = async (fam) => {
+                    if(!confirm(`Yakin Hapus PERMANEN keluarga "${fam.name}" beserta semua anggotanya?`)) return;
+                    isLoading.value = true; loadingMessage.value = 'Menghapus data silsilah...';
+                    
+                    const res = await callApi('deleteFamilyData', { familyId: fam.id });
+                    if(res.success) {
+                        familiesDb.value = familiesDb.value.filter(f => f.id !== fam.id);
+                        membersDb.value = membersDb.value.filter(m => m.familyId !== fam.id);
+                    } else alert(res.message);
+                    isLoading.value = false;
+                };
+
+                // --- LOGIKA TREE & ANGGOTA ---
+                const openFamily = (fam) => { selectedFamily.value = fam; currentView.value = 'tree'; resetTransform(); };
                 const isReadOnly = computed(() => selectedFamily.value?.ownerId !== currentUser.value?.id);
                 provide('isReadOnly', isReadOnly);
 
                 const currentMembers = computed(() => membersDb.value.filter(m => m.familyId === selectedFamily.value?.id));
-                
-                // Algoritma Hierarki
                 const treeData = computed(() => {
                     const map = {}; const roots = [];
                     currentMembers.value.forEach(m => map[m.id] = { ...m, children: [] });
-                    
-                    // Tarik garis hierarki fisik
                     currentMembers.value.forEach(m => {
-                        if (m.parentId && map[m.parentId]) map[m.parentId].children.push(map[m.id]);
-                        else roots.push(map[m.id]); // Jika tak punya parent, dia jadi Posisi Teratas
+                        if (m.parentId && map[m.parentId]) map[m.parentId].children.push(map[m.id]); else roots.push(map[m.id]);
                     });
-                    
-                    // Tarik garis relasi pasangan
                     currentMembers.value.forEach(m => {
                         if (m.partner && m.partner.parentId && map[m.partner.parentId]) {
                             map[m.partner.parentId].children.push({ id: `ref_${m.id}`, isPartnerRef: true, name: m.partner.name, gender: m.partner.gender, spouseName: m.name, birthYear: m.partner.birthYear || '9999', children: [] });
                         }
                     });
-
-                    // Urutkan sibling (kakak-adik) berdasarkan tahun lahir agar rapi
                     const sortByBirthYear = (arr) => {
-                        arr.sort((a, b) => {
-                            const yearA = parseInt(a.birthYear) || 9999;
-                            const yearB = parseInt(b.birthYear) || 9999;
-                            return yearA - yearB;
-                        });
-                        arr.forEach(node => {
-                            if (node.children && node.children.length > 0) sortByBirthYear(node.children);
-                        });
+                        arr.sort((a, b) => { return (parseInt(a.birthYear) || 9999) - (parseInt(b.birthYear) || 9999); });
+                        arr.forEach(node => { if (node.children && node.children.length > 0) sortByBirthYear(node.children); });
                     };
                     sortByBirthYear(roots);
-
                     return roots;
                 });
 
@@ -446,137 +479,59 @@
                 const modalTitle = computed(() => modalMode.value.includes('add') ? 'Tambah Anggota' : 'Edit Data');
                 const availableParentsForEdit = computed(() => {
                     if (modalMode.value === 'add') return currentMembers.value;
-                    const getDesc = (pId) => {
-                        let ids = []; currentMembers.value.filter(m => m.parentId === pId).forEach(c => { ids.push(c.id); ids = ids.concat(getDesc(c.id)); }); return ids;
-                    };
+                    const getDesc = (pId) => { let ids = []; currentMembers.value.filter(m => m.parentId === pId).forEach(c => { ids.push(c.id); ids = ids.concat(getDesc(c.id)); }); return ids; };
                     const invalid = [formData.id, ...getDesc(formData.id)];
                     return currentMembers.value.filter(m => !invalid.includes(m.id));
                 });
 
-                // PERBAIKAN: Form selalu direset menjadi nilai asli setiap kali diklik
-                const openAddModal = (pId) => { 
-                    modalMode.value = 'add'; 
-                    formData.id = null; formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = pId; 
-                    showModal.value = true; 
-                };
-                
-                const openEditModal = (node) => { 
-                    modalMode.value = 'edit'; 
-                    formData.id = node.id; 
-                    formData.name = node.name || ''; 
-                    formData.gender = node.gender || 'M'; 
-                    formData.birthYear = node.birthYear || ''; 
-                    formData.parentId = node.parentId || null; 
-                    showModal.value = true; 
-                };
-                
-                const openPartnerModal = (node, mode) => { 
-                    modalMode.value = mode; 
-                    formData.id = node.id; 
-                    targetNodeName.value = node.name; 
-                    if (mode === 'edit_partner' && node.partner) { 
-                        formData.name = node.partner.name || ''; 
-                        formData.gender = node.partner.gender || 'M'; 
-                        formData.birthYear = node.partner.birthYear || ''; 
-                        formData.parentId = node.partner.parentId || null; 
-                    } else { 
-                        formData.name = ''; formData.gender = node.gender === 'M' ? 'F' : 'M'; formData.birthYear = ''; formData.parentId = null; 
-                    } 
-                    showModal.value = true; 
-                };
-                
-                const openAddParentModal = (node) => { 
-                    modalMode.value = 'add_parent'; 
-                    formData.id = node.id; 
-                    targetNodeName.value = node.name; 
-                    formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = null; 
-                    showModal.value = true; 
-                };
-                
+                const openAddModal = (pId) => { modalMode.value = 'add'; formData.id = null; formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = pId; showModal.value = true; };
+                const openEditModal = (node) => { modalMode.value = 'edit'; formData.id = node.id; formData.name = node.name || ''; formData.gender = node.gender || 'M'; formData.birthYear = node.birthYear || ''; formData.parentId = node.parentId || null; showModal.value = true; };
+                const openPartnerModal = (node, mode) => { modalMode.value = mode; formData.id = node.id; targetNodeName.value = node.name; if (mode === 'edit_partner' && node.partner) { formData.name = node.partner.name || ''; formData.gender = node.partner.gender || 'M'; formData.birthYear = node.partner.birthYear || ''; formData.parentId = node.partner.parentId || null; } else { formData.name = ''; formData.gender = node.gender === 'M' ? 'F' : 'M'; formData.birthYear = ''; formData.parentId = null; } showModal.value = true; };
+                const openAddParentModal = (node) => { modalMode.value = 'add_parent'; formData.id = node.id; targetNodeName.value = node.name; formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = null; showModal.value = true; };
                 const closeModal = () => showModal.value = false;
 
-                // PERBAIKAN: Memaksa Reactivity Vue untuk Merender Ulang Fisik Pohon
                 const saveData = () => {
                     const famId = selectedFamily.value.id;
-                    
                     if (modalMode.value === 'add') {
-                        membersDb.value.push({ 
-                            id: 'mem_' + Date.now() + Math.random().toString(36).substr(2, 5), 
-                            familyId: famId, name: formData.name, gender: formData.gender, 
-                            birthYear: formData.birthYear, parentId: formData.parentId, partner: null 
-                        });
-                    } 
-                    else if (modalMode.value === 'edit') {
+                        membersDb.value.push({ id: 'mem_' + Date.now() + Math.random().toString(36).substr(2, 5), familyId: famId, name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId, partner: null });
+                    } else if (modalMode.value === 'edit') {
                         const index = membersDb.value.findIndex(x => x.id === formData.id);
-                        if(index !== -1) {
-                            // Mereplace object untuk memaksa layar menyusun ulang posisinya
-                            membersDb.value[index] = { 
-                                ...membersDb.value[index], 
-                                name: formData.name, gender: formData.gender, 
-                                birthYear: formData.birthYear, parentId: formData.parentId 
-                            };
-                        }
-                    } 
-                    else if (modalMode.value.includes('partner')) {
+                        if(index !== -1) membersDb.value[index] = { ...membersDb.value[index], name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId };
+                    } else if (modalMode.value.includes('partner')) {
                         const index = membersDb.value.findIndex(x => x.id === formData.id);
-                        if(index !== -1) {
-                            membersDb.value[index] = {
-                                ...membersDb.value[index],
-                                partner: { name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId }
-                            };
-                        }
-                    } 
-                    else if (modalMode.value === 'add_parent') {
+                        if(index !== -1) membersDb.value[index] = { ...membersDb.value[index], partner: { name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId } };
+                    } else if (modalMode.value === 'add_parent') {
                         const newPId = 'mem_' + Date.now();
-                        membersDb.value.push({ 
-                            id: newPId, familyId: famId, name: formData.name, 
-                            gender: formData.gender, birthYear: formData.birthYear, 
-                            parentId: null, partner: null 
-                        });
-                        
+                        membersDb.value.push({ id: newPId, familyId: famId, name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: null, partner: null });
                         const index = membersDb.value.findIndex(x => x.id === formData.id);
-                        if(index !== -1) {
-                            membersDb.value[index] = {
-                                ...membersDb.value[index],
-                                parentId: newPId
-                            };
-                        }
+                        if(index !== -1) membersDb.value[index] = { ...membersDb.value[index], parentId: newPId };
                     }
                     closeModal();
                 };
 
                 const deleteMember = (id) => { membersDb.value = membersDb.value.filter(m => m.id !== id); };
-                const deletePartner = (id) => { 
-                    const index = membersDb.value.findIndex(x => x.id === id); 
-                    if(index !== -1) membersDb.value[index] = { ...membersDb.value[index], partner: null }; 
-                };
+                const deletePartner = (id) => { const index = membersDb.value.findIndex(x => x.id === id); if(index !== -1) membersDb.value[index] = { ...membersDb.value[index], partner: null }; };
 
                 const saveFamilyToServer = async () => {
-                    isLoading.value = true;
-                    loadingMessage.value = 'Menyimpan ke Google Sheets...';
+                    isLoading.value = true; loadingMessage.value = 'Menyimpan ke Google Sheets...';
                     const famId = selectedFamily.value.id;
                     const membersToSave = membersDb.value.filter(m => m.familyId === famId);
                     
                     const res = await callApi('saveMembersData', { familyId: famId, membersData: membersToSave });
-                    if(res.success) {
-                        loadingMessage.value = 'Berhasil Disimpan!';
-                        setTimeout(() => { isLoading.value = false; }, 1000);
-                    } else {
-                        alert("Gagal menyimpan ke Sheets: " + res.message);
-                        isLoading.value = false;
-                    }
+                    if(res.success) { loadingMessage.value = 'Berhasil Disimpan!'; setTimeout(() => { isLoading.value = false; }, 1000); } 
+                    else { alert("Gagal menyimpan ke Sheets: " + res.message); isLoading.value = false; }
                 };
 
                 provide('openAddModal', openAddModal); provide('openEditModal', openEditModal); provide('deleteMember', deleteMember);
                 provide('openPartnerModal', openPartnerModal); provide('deletePartner', deletePartner); provide('openAddParentModal', openAddParentModal);
 
                 return {
-                    isLoading, loadingMessage, currentView, dashboardTab, currentUser,
-                    authMode, authForm, authError, handleAuth, logout, fetchDataFromServer,
-                    myFamilies, otherFamilies, showNewFamilyModal, newFamilyName, createFamily, openFamily,
+                    isLoading, loadingMessage, currentView, dashboardTab, currentUser, authMode, authForm, authError, handleAuth, logout, fetchDataFromServer,
+                    myFamilies, otherFamilies, 
+                    showFamilyModal, familyModalMode, familyFormName, openFamilyModal, submitFamilyForm, deleteFamily, openFamily,
                     selectedFamily, isReadOnly, treeData, saveFamilyToServer,
-                    showModal, modalMode, modalTitle, formData, targetNodeName, availableParentsForEdit,
-                    openAddModal, closeModal, saveData, zoomLevel, zoomIn, zoomOut, zoomReset
+                    showModal, modalMode, modalTitle, formData, targetNodeName, availableParentsForEdit, openAddModal, closeModal, saveData, 
+                    zoomLevel, panX, panY, startPan, doPan, endPan, doWheelZoom, startTouch, doTouch, endTouch, resetTransform
                 };
             }
         });
