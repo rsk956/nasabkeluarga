@@ -203,7 +203,7 @@
                     <div v-if="['add', 'edit', 'add_partner', 'edit_partner'].includes(modalMode)">
                         <label class="block text-sm font-medium mb-1">Hubungan Orang Tua</label>
                         <select v-model="formData.parentId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
-                            <option :value="null">-- Tidak Diketahui / Root --</option>
+                            <option :value="null">-- Tidak Diketahui / Root (Akan Ditaruh Paling Atas) --</option>
                             <option v-for="m in availableParentsForEdit" :key="m.id" :value="m.id">{{ m.name }}</option>
                         </select>
                     </div>
@@ -216,7 +216,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT VUE TERHUBUNG KE API EKSTERNAL -->
+    <!-- SCRIPT VUE -->
     <script>
         // ==== PENTING: GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA ====
         const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz4l3C5TVc1W4nLlzmC3ZrWfDFunBaKdCNjfqsqNrabDiQXy_t1bYy9XDTuJb2hk6lL2Q/exec';
@@ -312,13 +312,12 @@
                 const zoomOut = () => { if (zoomLevel.value > 0.4) zoomLevel.value -= 0.1; };
                 const zoomReset = () => { zoomLevel.value = 1; };
 
-                // FUNGSI KOMUNIKASI FETCH API KE GOOGLE APPS SCRIPT
+                // KOMUNIKASI FETCH API KE GOOGLE APPS SCRIPT
                 const callApi = async (action, data = {}) => {
-                    if (GAS_API_URL === 'MASUKKAN_LINK_URL_WEB_APP_APPS_SCRIPT_DI_SINI' || GAS_API_URL === '') {
+                    if (GAS_API_URL === 'https://script.google.com/macros/s/AKfycbz4l3C5TVc1W4nLlzmC3ZrWfDFunBaKdCNjfqsqNrabDiQXy_t1bYy9XDTuJb2hk6lL2Q/exec' || GAS_API_URL === '') {
                         return { success: false, message: "URL Database belum disetting di kode HTML!" };
                     }
                     try {
-                        // Menggunakan text/plain untuk melewati blokir CORS preflight browser
                         const response = await fetch(GAS_API_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -326,14 +325,13 @@
                         });
                         return await response.json();
                     } catch (error) {
-                        console.error("API Error:", error);
                         return { success: false, message: "Gagal terhubung ke Database Google Sheets." };
                     }
                 };
 
                 const fetchDataFromServer = async () => {
                     isLoading.value = true;
-                    loadingMessage.value = 'Menarik data dari database...';
+                    loadingMessage.value = 'Memuat data...';
                     const res = await callApi('getAllData');
                     if (res.success) {
                         familiesDb.value = res.families || [];
@@ -409,6 +407,8 @@
                 provide('isReadOnly', isReadOnly);
 
                 const currentMembers = computed(() => membersDb.value.filter(m => m.familyId === selectedFamily.value?.id));
+                
+                // MENGUBAH ALGORITMA: PENGURUTAN BERDASARKAN TAHUN LAHIR AGAR TAMPILAN RAPI
                 const treeData = computed(() => {
                     const map = {}; const roots = [];
                     currentMembers.value.forEach(m => map[m.id] = { ...m, children: [] });
@@ -418,9 +418,23 @@
                     });
                     currentMembers.value.forEach(m => {
                         if (m.partner && m.partner.parentId && map[m.partner.parentId]) {
-                            map[m.partner.parentId].children.push({ id: `ref_${m.id}`, isPartnerRef: true, name: m.partner.name, gender: m.partner.gender, spouseName: m.name, children: [] });
+                            map[m.partner.parentId].children.push({ id: `ref_${m.id}`, isPartnerRef: true, name: m.partner.name, gender: m.partner.gender, spouseName: m.name, birthYear: m.partner.birthYear || '9999', children: [] });
                         }
                     });
+
+                    // Urutkan sibling (kakak-adik) berdasarkan tahun lahir (dari tua ke muda)
+                    const sortByBirthYear = (arr) => {
+                        arr.sort((a, b) => {
+                            const yearA = parseInt(a.birthYear) || 9999;
+                            const yearB = parseInt(b.birthYear) || 9999;
+                            return yearA - yearB;
+                        });
+                        arr.forEach(node => {
+                            if (node.children && node.children.length > 0) sortByBirthYear(node.children);
+                        });
+                    };
+                    sortByBirthYear(roots);
+
                     return roots;
                 });
 
@@ -437,10 +451,50 @@
                     return currentMembers.value.filter(m => !invalid.includes(m.id));
                 });
 
-                const openAddModal = (pId) => { modalMode.value = 'add'; formData.id = null; formData.name = ''; formData.birthYear = ''; formData.parentId = pId; showModal.value = true; };
-                const openEditModal = (node) => { modalMode.value = 'edit'; Object.assign(formData, node); showModal.value = true; };
-                const openPartnerModal = (node, mode) => { modalMode.value = mode; formData.id = node.id; targetNodeName.value = node.name; showModal.value = true; };
-                const openAddParentModal = (node) => { modalMode.value = 'add_parent'; formData.id = node.id; targetNodeName.value = node.name; showModal.value = true; };
+                // PERBAIKAN BUG FORM: MENGOSONGKAN ATAU MENGISI SPESIFIK AGAR TIDAK TERCAMPUR
+                const openAddModal = (pId) => { 
+                    modalMode.value = 'add'; formData.id = null; formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = pId; showModal.value = true; 
+                };
+                
+                const openEditModal = (node) => { 
+                    modalMode.value = 'edit'; 
+                    formData.id = node.id; 
+                    formData.name = node.name || ''; 
+                    formData.gender = node.gender || 'M'; 
+                    formData.birthYear = node.birthYear || ''; 
+                    formData.parentId = node.parentId || null; 
+                    showModal.value = true; 
+                };
+                
+                const openPartnerModal = (node, mode) => { 
+                    modalMode.value = mode; 
+                    formData.id = node.id; 
+                    targetNodeName.value = node.name; 
+                    if (mode === 'edit_partner' && node.partner) { 
+                        formData.name = node.partner.name || ''; 
+                        formData.gender = node.partner.gender || 'M'; 
+                        formData.birthYear = node.partner.birthYear || ''; 
+                        formData.parentId = node.partner.parentId || null; 
+                    } else { 
+                        formData.name = ''; 
+                        formData.gender = node.gender === 'M' ? 'F' : 'M'; 
+                        formData.birthYear = ''; 
+                        formData.parentId = null; 
+                    } 
+                    showModal.value = true; 
+                };
+                
+                const openAddParentModal = (node) => { 
+                    modalMode.value = 'add_parent'; 
+                    formData.id = node.id; 
+                    targetNodeName.value = node.name; 
+                    formData.name = ''; 
+                    formData.gender = 'M'; 
+                    formData.birthYear = ''; 
+                    formData.parentId = null; 
+                    showModal.value = true; 
+                };
+                
                 const closeModal = () => showModal.value = false;
 
                 const saveData = () => {
@@ -467,7 +521,7 @@
 
                 const saveFamilyToServer = async () => {
                     isLoading.value = true;
-                    loadingMessage.value = 'Menyimpan ke Google Sheets...';
+                    loadingMessage.value = 'Menyimpan data...';
                     const famId = selectedFamily.value.id;
                     const membersToSave = membersDb.value.filter(m => m.familyId === famId);
                     
@@ -499,4 +553,4 @@
         app.mount('#app');
     </script>
 </body>
-</html>
+						</html>
