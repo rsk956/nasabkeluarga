@@ -79,7 +79,7 @@
             <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center z-10">
                 <div class="flex items-center space-x-3">
                     <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-sitemap"></i></div>
-                    <h1 class="font-bold text-xl text-gray-800">Dashboard Utama</h1>
+                    <h1 class="font-bold text-xl text-gray-800">SILSILAH KELUARGA</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button @click="fetchDataFromServer" class="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded transition text-sm font-medium"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
@@ -314,7 +314,7 @@
 
                 // KOMUNIKASI FETCH API KE GOOGLE APPS SCRIPT
                 const callApi = async (action, data = {}) => {
-                    if (GAS_API_URL === 'https://script.google.com/macros/s/AKfycbz4l3C5TVc1W4nLlzmC3ZrWfDFunBaKdCNjfqsqNrabDiQXy_t1bYy9XDTuJb2hk6lL2Q/exec' || GAS_API_URL === '') {
+                    if (GAS_API_URL === '' || GAS_API_URL === '') {
                         return { success: false, message: "URL Database belum disetting di kode HTML!" };
                     }
                     try {
