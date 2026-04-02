@@ -11,16 +11,19 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
 
     <style>
-        .tree ul { display: flex; justify-content: center; padding-top: 20px; position: relative; transition: all 0.5s; }
-        .tree li { display: flex; flex-direction: column; align-items: center; position: relative; padding: 20px 10px 0 10px; transition: all 0.5s; }
-        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #94a3b8; width: 50%; height: 20px; }
+        /* CSS Bagan Silsilah: Memaksa Hierarki Atas-Bawah secara Fisik */
+        .tree ul { display: flex; justify-content: center; align-items: flex-start; padding-top: 30px; position: relative; transition: all 0.5s; }
+        .tree li { display: flex; flex-direction: column; align-items: center; position: relative; padding: 30px 10px 0 10px; transition: all 0.5s; }
+        
+        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #94a3b8; width: 50%; height: 30px; }
         .tree li::after { right: auto; left: 50%; border-left: 2px solid #94a3b8; }
         .tree li:only-child::after, .tree li:only-child::before { display: none; }
         .tree li:only-child { padding-top: 0; }
         .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
         .tree li:last-child::before { border-right: 2px solid #94a3b8; border-radius: 0 6px 0 0; }
         .tree li:first-child::after { border-radius: 6px 0 0 0; }
-        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #94a3b8; width: 0; height: 20px; margin-left: -1px; }
+        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #94a3b8; width: 0; height: 30px; margin-left: -1px; }
+        
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -33,13 +36,11 @@
 <body class="bg-gray-50 font-sans text-gray-800">
     <div id="app" class="min-h-screen flex flex-col relative" v-cloak>
 
-        <!-- Loading Screen -->
         <div v-if="isLoading" class="loading-overlay">
             <i class="fas fa-cloud-download-alt fa-bounce text-5xl text-blue-600 mb-4"></i>
             <p class="text-gray-800 font-bold text-xl">{{ loadingMessage }}</p>
         </div>
 
-        <!-- AUTH PAGE -->
         <div v-if="currentView === 'auth'" class="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-800 p-4">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
                 <div class="text-center mb-8">
@@ -74,12 +75,11 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PAGE -->
         <div v-else-if="currentView === 'dashboard'" class="flex-1 flex flex-col bg-gray-50 h-screen overflow-hidden">
             <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center z-10">
                 <div class="flex items-center space-x-3">
                     <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-sitemap"></i></div>
-                    <h1 class="font-bold text-xl text-gray-800">Dasboard</h1>
+                    <h1 class="font-bold text-xl text-gray-800">Dashboard Utama</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button @click="fetchDataFromServer" class="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded transition text-sm font-medium"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
@@ -123,7 +123,6 @@
             </div>
         </div>
 
-        <!-- TREE PAGE -->
         <div v-else-if="currentView === 'tree'" class="flex-1 flex flex-col h-screen overflow-hidden">
             <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center z-10">
                 <div class="flex items-center space-x-4">
@@ -133,7 +132,7 @@
                     <span v-if="isReadOnly" class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold uppercase border border-yellow-200">Hanya Lihat</span>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <button v-if="!isReadOnly" @click="openAddModal(null)" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition text-sm font-medium"><i class="fas fa-plus mr-1"></i> Akar</button>
+                    <button v-if="!isReadOnly" @click="openAddModal(null)" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg transition text-sm font-medium"><i class="fas fa-plus mr-1"></i> Tambah Akar (Awal)</button>
                     <button v-if="!isReadOnly" @click="saveFamilyToServer" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition text-sm font-medium"><i class="fas fa-cloud-upload-alt mr-2"></i> Simpan ke Database</button>
                 </div>
             </nav>
@@ -158,13 +157,11 @@
             </main>
         </div>
 
-        <!-- MODALS -->
-        <!-- Buat Keluarga -->
         <div v-if="showNewFamilyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Buat Silsilah Baru</h3>
                 <form @submit.prevent="createFamily">
-                    <input v-model="newFamilyName" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" required placeholder="Contoh: Keluarga Sastrowardoyo">
+                    <input v-model="newFamilyName" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" required placeholder="Contoh: Keluarga Cendana">
                     <div class="flex justify-end space-x-3">
                         <button type="button" @click="showNewFamilyModal = false" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Batal</button>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow">Buat Silsilah</button>
@@ -173,7 +170,6 @@
             </div>
         </div>
 
-        <!-- CRUD Anggota -->
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
                 <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
@@ -182,7 +178,7 @@
                 </div>
                 <form @submit.prevent="saveData" class="p-6 space-y-4">
                     <div v-if="['add_parent', 'add_partner', 'edit_partner'].includes(modalMode)" class="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm mb-4">
-                        Tindakan untuk: <b>{{ targetNodeName }}</b>
+                        Tindakan untuk: <b class="uppercase">{{ targetNodeName }}</b>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Nama Lengkap</label>
@@ -201,25 +197,24 @@
                         </div>
                     </div>
                     <div v-if="['add', 'edit', 'add_partner', 'edit_partner'].includes(modalMode)">
-                        <label class="block text-sm font-medium mb-1">Hubungan Orang Tua</label>
+                        <label class="block text-sm font-medium mb-1">Pilih Orang Tua (Opsional)</label>
                         <select v-model="formData.parentId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
-                            <option :value="null">-- Tidak Diketahui / Root (Akan Ditaruh Paling Atas) --</option>
+                            <option :value="null">-- Tidak Ada (Otomatis Ditarik Paling Atas) --</option>
                             <option v-for="m in availableParentsForEdit" :key="m.id" :value="m.id">{{ m.name }}</option>
                         </select>
                     </div>
                     <div class="pt-4 flex justify-end space-x-3 border-t mt-6">
                         <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow"><i class="fas fa-check mr-1"></i> Terapkan</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow"><i class="fas fa-check mr-1"></i> Simpan Posisi</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT VUE -->
     <script>
-        // ==== PENTING: GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA ====
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz4l3C5TVc1W4nLlzmC3ZrWfDFunBaKdCNjfqsqNrabDiQXy_t1bYy9XDTuJb2hk6lL2Q/exec';
+        // ==== PENTING: GANTI URL DI BAWAH DENGAN URL WEB APP GAS ANDA ====
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz_0tE1TfloEmQ0-JLad32HQjoILW5m6IofJGApW53WWbQ3JJ7lauuiMGl5UlwnX7YHRg/exec';
 
         const safeStorage = {
             get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
@@ -245,14 +240,15 @@
                                 </div>
                             </div>
                         </template>
+                        
                         <template v-else>
                             <div class="relative inline-block mx-2 text-center group cursor-default">
                                 <div v-if="!isReadOnly.value" class="absolute -top-5 right-[-10px] hidden group-hover:flex gap-1 z-20 bg-white/50 backdrop-blur-sm p-1 rounded-full shadow border transition-all">
-                                    <button v-if="!node.parentId" @click.stop="openAddParentModal(node)" class="bg-indigo-500 text-white rounded-full w-8 h-8 hover:bg-indigo-600 hover:scale-110 transition"><i class="fas fa-arrow-up"></i></button>
-                                    <button v-if="!node.partner" @click.stop="openPartnerModal(node, 'add_partner')" class="bg-purple-500 text-white rounded-full w-8 h-8 hover:bg-purple-600 hover:scale-110 transition"><i class="fas fa-heart"></i></button>
-                                    <button @click.stop="openAddModal(node.id)" class="bg-green-500 text-white rounded-full w-8 h-8 hover:bg-green-600 hover:scale-110 transition"><i class="fas fa-plus"></i></button>
-                                    <button @click.stop="openEditModal(node)" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition"><i class="fas fa-pen"></i></button>
-                                    <button @click.stop="deleteMember(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition"><i class="fas fa-trash"></i></button>
+                                    <button v-if="!node.parentId" @click.stop="openAddParentModal(node)" class="bg-indigo-500 text-white rounded-full w-8 h-8 hover:bg-indigo-600 hover:scale-110 transition" title="Tambah Orang Tua (Naik Ke Atas)"><i class="fas fa-arrow-up"></i></button>
+                                    <button v-if="!node.partner" @click.stop="openPartnerModal(node, 'add_partner')" class="bg-purple-500 text-white rounded-full w-8 h-8 hover:bg-purple-600 hover:scale-110 transition" title="Tambah Pasangan"><i class="fas fa-heart"></i></button>
+                                    <button @click.stop="openAddModal(node.id)" class="bg-green-500 text-white rounded-full w-8 h-8 hover:bg-green-600 hover:scale-110 transition" title="Tambah Anak"><i class="fas fa-plus"></i></button>
+                                    <button @click.stop="openEditModal(node)" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition" title="Edit Orang Ini"><i class="fas fa-pen"></i></button>
+                                    <button @click.stop="deleteMember(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition" title="Hapus"><i class="fas fa-trash"></i></button>
                                 </div>
                                 <div :class="['p-4 rounded-xl shadow-sm border-2 min-w-[140px] bg-white transition hover:shadow-md', node.gender === 'M' ? 'border-blue-200' : 'border-pink-200']">
                                     <div :class="['w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl text-white mb-2 shadow-inner', node.gender === 'M' ? 'bg-gradient-to-br from-blue-400 to-blue-600' : 'bg-gradient-to-br from-pink-400 to-pink-600']"><i :class="node.gender === 'M' ? 'fas fa-user-tie' : 'fas fa-user'"></i></div>
@@ -260,13 +256,15 @@
                                     <div class="text-xs text-gray-500 mt-1"><i class="fas fa-birthday-cake text-gray-300 mr-1"></i> {{ node.birthYear || '-' }}</div>
                                 </div>
                             </div>
+
                             <div v-if="node.partner" class="flex flex-col items-center justify-center mt-10">
                                 <div class="w-8 md:w-12 border-b-2 border-red-300 relative"><i class="fas fa-heart absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 bg-gray-50 px-1 text-[10px]"></i></div>
                             </div>
+
                             <div v-if="node.partner" class="relative inline-block mx-2 text-center group cursor-default">
                                 <div v-if="!isReadOnly.value" class="absolute -top-5 right-[-10px] hidden group-hover:flex gap-1 z-20 bg-white/50 backdrop-blur-sm p-1 rounded-full shadow border transition-all">
-                                    <button @click.stop="openPartnerModal(node, 'edit_partner')" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition"><i class="fas fa-pen"></i></button>
-                                    <button @click.stop="deletePartner(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition"><i class="fas fa-trash"></i></button>
+                                    <button @click.stop="openPartnerModal(node, 'edit_partner')" class="bg-yellow-500 text-white rounded-full w-8 h-8 hover:bg-yellow-600 hover:scale-110 transition" title="Edit Pasangan"><i class="fas fa-pen"></i></button>
+                                    <button @click.stop="deletePartner(node.id)" class="bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 hover:scale-110 transition" title="Hapus Pasangan"><i class="fas fa-trash"></i></button>
                                 </div>
                                 <div :class="['p-4 rounded-xl shadow-sm border-2 min-w-[140px] bg-white border-dashed transition', node.partner.gender === 'M' ? 'border-blue-300' : 'border-pink-300']">
                                     <div :class="['w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl text-white mb-2 shadow-inner', node.partner.gender === 'M' ? 'bg-gradient-to-br from-blue-300 to-blue-500' : 'bg-gradient-to-br from-pink-300 to-pink-500']"><i :class="node.partner.gender === 'M' ? 'fas fa-user-tie' : 'fas fa-user'"></i></div>
@@ -278,6 +276,7 @@
                             </div>
                         </template>
                     </div>
+
                     <ul v-if="node.children && node.children.length > 0"><tree-node v-for="child in node.children" :key="child.id" :node="child"></tree-node></ul>
                 </li>
             `
@@ -312,9 +311,8 @@
                 const zoomOut = () => { if (zoomLevel.value > 0.4) zoomLevel.value -= 0.1; };
                 const zoomReset = () => { zoomLevel.value = 1; };
 
-                // KOMUNIKASI FETCH API KE GOOGLE APPS SCRIPT
                 const callApi = async (action, data = {}) => {
-                    if (GAS_API_URL === '' || GAS_API_URL === '') {
+                    if (GAS_API_URL === '' || GAS_API_URL.includes('MASUKKAN_LINK')) {
                         return { success: false, message: "URL Database belum disetting di kode HTML!" };
                     }
                     try {
@@ -331,7 +329,7 @@
 
                 const fetchDataFromServer = async () => {
                     isLoading.value = true;
-                    loadingMessage.value = 'Memuat data...';
+                    loadingMessage.value = 'Menarik data dari database...';
                     const res = await callApi('getAllData');
                     if (res.success) {
                         familiesDb.value = res.families || [];
@@ -408,21 +406,25 @@
 
                 const currentMembers = computed(() => membersDb.value.filter(m => m.familyId === selectedFamily.value?.id));
                 
-                // MENGUBAH ALGORITMA: PENGURUTAN BERDASARKAN TAHUN LAHIR AGAR TAMPILAN RAPI
+                // Algoritma Hierarki
                 const treeData = computed(() => {
                     const map = {}; const roots = [];
                     currentMembers.value.forEach(m => map[m.id] = { ...m, children: [] });
+                    
+                    // Tarik garis hierarki fisik
                     currentMembers.value.forEach(m => {
                         if (m.parentId && map[m.parentId]) map[m.parentId].children.push(map[m.id]);
-                        else roots.push(map[m.id]);
+                        else roots.push(map[m.id]); // Jika tak punya parent, dia jadi Posisi Teratas
                     });
+                    
+                    // Tarik garis relasi pasangan
                     currentMembers.value.forEach(m => {
                         if (m.partner && m.partner.parentId && map[m.partner.parentId]) {
                             map[m.partner.parentId].children.push({ id: `ref_${m.id}`, isPartnerRef: true, name: m.partner.name, gender: m.partner.gender, spouseName: m.name, birthYear: m.partner.birthYear || '9999', children: [] });
                         }
                     });
 
-                    // Urutkan sibling (kakak-adik) berdasarkan tahun lahir (dari tua ke muda)
+                    // Urutkan sibling (kakak-adik) berdasarkan tahun lahir agar rapi
                     const sortByBirthYear = (arr) => {
                         arr.sort((a, b) => {
                             const yearA = parseInt(a.birthYear) || 9999;
@@ -451,9 +453,11 @@
                     return currentMembers.value.filter(m => !invalid.includes(m.id));
                 });
 
-                // PERBAIKAN BUG FORM: MENGOSONGKAN ATAU MENGISI SPESIFIK AGAR TIDAK TERCAMPUR
+                // PERBAIKAN: Form selalu direset menjadi nilai asli setiap kali diklik
                 const openAddModal = (pId) => { 
-                    modalMode.value = 'add'; formData.id = null; formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = pId; showModal.value = true; 
+                    modalMode.value = 'add'; 
+                    formData.id = null; formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = pId; 
+                    showModal.value = true; 
                 };
                 
                 const openEditModal = (node) => { 
@@ -476,10 +480,7 @@
                         formData.birthYear = node.partner.birthYear || ''; 
                         formData.parentId = node.partner.parentId || null; 
                     } else { 
-                        formData.name = ''; 
-                        formData.gender = node.gender === 'M' ? 'F' : 'M'; 
-                        formData.birthYear = ''; 
-                        formData.parentId = null; 
+                        formData.name = ''; formData.gender = node.gender === 'M' ? 'F' : 'M'; formData.birthYear = ''; formData.parentId = null; 
                     } 
                     showModal.value = true; 
                 };
@@ -488,40 +489,71 @@
                     modalMode.value = 'add_parent'; 
                     formData.id = node.id; 
                     targetNodeName.value = node.name; 
-                    formData.name = ''; 
-                    formData.gender = 'M'; 
-                    formData.birthYear = ''; 
-                    formData.parentId = null; 
+                    formData.name = ''; formData.gender = 'M'; formData.birthYear = ''; formData.parentId = null; 
                     showModal.value = true; 
                 };
                 
                 const closeModal = () => showModal.value = false;
 
+                // PERBAIKAN: Memaksa Reactivity Vue untuk Merender Ulang Fisik Pohon
                 const saveData = () => {
                     const famId = selectedFamily.value.id;
+                    
                     if (modalMode.value === 'add') {
-                        membersDb.value.push({ id: 'mem_' + Date.now() + Math.random().toString(36).substr(2, 5), familyId: famId, name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId, partner: null });
-                    } else if (modalMode.value === 'edit') {
-                        const m = membersDb.value.find(x => x.id === formData.id);
-                        if(m) { m.name = formData.name; m.gender = formData.gender; m.birthYear = formData.birthYear; m.parentId = formData.parentId; }
-                    } else if (modalMode.value.includes('partner')) {
-                        const m = membersDb.value.find(x => x.id === formData.id);
-                        if(m) m.partner = { name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId };
-                    } else if (modalMode.value === 'add_parent') {
+                        membersDb.value.push({ 
+                            id: 'mem_' + Date.now() + Math.random().toString(36).substr(2, 5), 
+                            familyId: famId, name: formData.name, gender: formData.gender, 
+                            birthYear: formData.birthYear, parentId: formData.parentId, partner: null 
+                        });
+                    } 
+                    else if (modalMode.value === 'edit') {
+                        const index = membersDb.value.findIndex(x => x.id === formData.id);
+                        if(index !== -1) {
+                            // Mereplace object untuk memaksa layar menyusun ulang posisinya
+                            membersDb.value[index] = { 
+                                ...membersDb.value[index], 
+                                name: formData.name, gender: formData.gender, 
+                                birthYear: formData.birthYear, parentId: formData.parentId 
+                            };
+                        }
+                    } 
+                    else if (modalMode.value.includes('partner')) {
+                        const index = membersDb.value.findIndex(x => x.id === formData.id);
+                        if(index !== -1) {
+                            membersDb.value[index] = {
+                                ...membersDb.value[index],
+                                partner: { name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: formData.parentId }
+                            };
+                        }
+                    } 
+                    else if (modalMode.value === 'add_parent') {
                         const newPId = 'mem_' + Date.now();
-                        membersDb.value.push({ id: newPId, familyId: famId, name: formData.name, gender: formData.gender, birthYear: formData.birthYear, parentId: null, partner: null });
-                        const m = membersDb.value.find(x => x.id === formData.id);
-                        if(m) m.parentId = newPId;
+                        membersDb.value.push({ 
+                            id: newPId, familyId: famId, name: formData.name, 
+                            gender: formData.gender, birthYear: formData.birthYear, 
+                            parentId: null, partner: null 
+                        });
+                        
+                        const index = membersDb.value.findIndex(x => x.id === formData.id);
+                        if(index !== -1) {
+                            membersDb.value[index] = {
+                                ...membersDb.value[index],
+                                parentId: newPId
+                            };
+                        }
                     }
                     closeModal();
                 };
 
                 const deleteMember = (id) => { membersDb.value = membersDb.value.filter(m => m.id !== id); };
-                const deletePartner = (id) => { const m = membersDb.value.find(x => x.id === id); if(m) m.partner = null; };
+                const deletePartner = (id) => { 
+                    const index = membersDb.value.findIndex(x => x.id === id); 
+                    if(index !== -1) membersDb.value[index] = { ...membersDb.value[index], partner: null }; 
+                };
 
                 const saveFamilyToServer = async () => {
                     isLoading.value = true;
-                    loadingMessage.value = 'Menyimpan data...';
+                    loadingMessage.value = 'Menyimpan ke Google Sheets...';
                     const famId = selectedFamily.value.id;
                     const membersToSave = membersDb.value.filter(m => m.familyId === famId);
                     
@@ -553,4 +585,4 @@
         app.mount('#app');
     </script>
 </body>
-						</html>
+</html>
